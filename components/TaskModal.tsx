@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Task } from "../../types";
+import { useTasks } from "../hooks/useTasks";
+import { Task } from "../types";
 
 interface TaskModalProps {
   task: Task | null;
@@ -11,14 +10,14 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ task, onClose }: TaskModalProps) {
-  const create = useMutation(api.tasks.create);
-  const update = useMutation(api.tasks.update);
+  const { createTask, updateTask } = useTasks();
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     priority: "medium" as const,
     assignee: "gregoire" as const,
+    status: "todo" as const,
     tags: "",
   });
 
@@ -29,6 +28,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
         description: task.description || "",
         priority: task.priority,
         assignee: task.assignee,
+        status: task.status,
         tags: task.tags?.join(", ") || "",
       });
     }
@@ -42,23 +42,19 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
       .map((t) => t.trim())
       .filter(Boolean);
 
+    const data = {
+      title: formData.title,
+      description: formData.description || "",
+      priority: formData.priority,
+      assignee: formData.assignee,
+      status: formData.status,
+      tags: tags,
+    };
+
     if (task) {
-      await update({
-        id: task._id,
-        title: formData.title,
-        description: formData.description || undefined,
-        priority: formData.priority,
-        assignee: formData.assignee,
-        tags: tags.length > 0 ? tags : undefined,
-      });
+      await updateTask(task.id, data);
     } else {
-      await create({
-        title: formData.title,
-        description: formData.description || undefined,
-        priority: formData.priority,
-        assignee: formData.assignee,
-        tags: tags.length > 0 ? tags : undefined,
-      });
+      await createTask(data);
     }
     onClose();
   };
@@ -101,6 +97,29 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
               placeholder="Détails de la tâche..."
             />
           </div>
+
+          {task && (
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1">
+                Statut
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as Task["status"],
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="todo">À faire</option>
+                <option value="in-progress">En cours</option>
+                <option value="review">En revue</option>
+                <option value="done">Terminé</option>
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

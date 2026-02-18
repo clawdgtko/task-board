@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useTasks } from "../hooks/useTasks";
 import { TaskCard } from "./TaskCard";
 import { TaskModal } from "./TaskModal";
-import { Task } from "../../types";
+import { Task } from "../types";
 
 const columns = [
   { id: "todo", label: "À faire", color: "bg-slate-500" },
@@ -15,7 +14,7 @@ const columns = [
 ] as const;
 
 export function TaskBoard() {
-  const tasks = useQuery(api.tasks.getAll) || [];
+  const { tasks, loading, updateTask, deleteTask } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -31,6 +30,24 @@ export function TaskBoard() {
     setIsModalOpen(false);
     setEditingTask(null);
   };
+
+  const handleStatusChange = async (task: Task, newStatus: string) => {
+    await updateTask(task.id, { status: newStatus });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Supprimer cette tâche ?")) {
+      await deleteTask(id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-slate-400">Chargement...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">
@@ -61,9 +78,11 @@ export function TaskBoard() {
             <div className="flex-1 overflow-y-auto space-y-3">
               {getTasksByStatus(column.id).map((task) => (
                 <TaskCard
-                  key={task._id}
+                  key={task.id}
                   task={task}
                   onEdit={() => handleEdit(task)}
+                  onStatusChange={(status) => handleStatusChange(task, status)}
+                  onDelete={() => handleDelete(task.id)}
                 />
               ))}
             </div>

@@ -1,15 +1,17 @@
 {
-  "name": "my-app",
+  "name": "task-board",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pb:serve": "./pocketbase serve"
   },
   "dependencies": {
     "next": "16.1.6",
+    "pocketbase": "^0.25.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

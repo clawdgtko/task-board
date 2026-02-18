@@ -1,12 +1,12 @@
 "use client";
 
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Task } from "../../types";
+import { Task } from "../types";
 
 interface TaskCardProps {
   task: Task;
   onEdit: () => void;
+  onStatusChange: (status: string) => void;
+  onDelete: () => void;
 }
 
 const priorityColors = {
@@ -31,30 +31,25 @@ const assigneeColors = {
   clawd: "bg-violet-600/30 text-violet-300 border-violet-500/30",
 };
 
-export function TaskCard({ task, onEdit }: TaskCardProps) {
-  const updateStatus = useMutation(api.tasks.updateStatus);
-  const remove = useMutation(api.tasks.remove);
+const nextStatus: Record<string, string> = {
+  todo: "in-progress",
+  "in-progress": "review",
+  review: "done",
+  done: "todo",
+};
 
-  const nextStatus = {
-    todo: "in-progress",
-    "in-progress": "review",
-    review: "done",
-    done: "todo",
-  } as const;
-
+export function TaskCard({ task, onEdit, onStatusChange, onDelete }: TaskCardProps) {
   const handleStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    updateStatus({ id: task._id, status: nextStatus[task.status] });
+    onStatusChange(nextStatus[task.status]);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Supprimer cette tâche ?")) {
-      remove({ id: task._id });
-    }
+    onDelete();
   };
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "short",
@@ -120,7 +115,7 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
       )}
 
       <div className="text-[10px] text-slate-500 mt-2">
-        {formatDate(task.createdAt)}
+        {formatDate(task.created)}
       </div>
     </div>
   );
